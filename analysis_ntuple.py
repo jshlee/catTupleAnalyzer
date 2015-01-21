@@ -162,7 +162,7 @@ for rf in root_l:
       continue
     for xh in [5,4,3,2,1,0]:
       if hlt_pass[xh] == 1:
-        br_hlt_pass[0] = hlt_pass[xh]
+        br_hlt_pass[0] =xh
         br_hlt_pre[0] = hlt_pre[xh]
         break
     hlt_pass.sort()
