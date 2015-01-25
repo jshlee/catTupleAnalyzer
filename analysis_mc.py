@@ -52,7 +52,7 @@ in_put_num_event = 0
 ### ntuple booking
 sys_e = ["pt", "eup", "edown", "es", "esup", "esdown"]
 tr_l = []
-br_c = ["beta", "del_eta", "del_phi", "del_r", "jet1_pt", "jet1_eta", "jet1_phi", "jet2_pt", "jet2_eta", "jet2_phi", "jet3_pt", "jet3_eta", "jet3_phi", "njet", "met", "nvtx", "npuvtx", "mc_w", "pu_w", "pu_w_up", "pu_w_down"]
+br_c = ["beta", "del_eta", "del_phi", "del_r", "jet1_pt", "jet1_eta", "jet1_phi", "jet1_d_pt", "jet1_d_eta", "jet1_d_phi", "jet2_pt", "jet2_eta", "jet2_phi", "jet2_d_pt", "jet2_d_eta", "jet2_d_phi", "jet3_pt", "jet3_eta", "jet3_phi", "jet3_d_pt", "jet3_d_eta", "jet3_d_phi", "njet", "met", "nvtx", "npuvtx", "mc_w", "pu_w", "pu_w_up", "pu_w_down"]
 br_l = []
 for x in xrange(len(sys_e)):
   tr_l.append(copy.deepcopy(ROOT.TTree(sys_e[x]+"_beta", "color cohernece systematic errors : "+sys_e[x])))
@@ -81,7 +81,8 @@ for rf in root_l:
   genJetsLabel, genJets = "catGenJets", Handle("std::vector<cat::GenJet>")
   geninfoLabel, gen_info = "generator", Handle("GenEventInfoProduct")
   puvtxLabel, puvtx = "addPileupInfo", Handle("vector<PileupSummaryInfo>")
-
+  #puwLabel, puw = ("pileupWeight", ""), Handle("double")
+  
   for iev,event in enumerate(events):
     ### event cut
     event.getByLabel(jetsLabel,jets)
@@ -93,14 +94,17 @@ for rf in root_l:
     goodvtx = GVTX.isValid()
     if not goodvtx:
       continue
-           
+    #event.getByLabel(puwLabel, puw)
     event.getByLabel(metLabel,mets)
     mets_ = mets.product().at(0).et()
     jet_l = []
     for i,g in enumerate(jets.product()):
       if g.LooseId() == 0:
         continue
-      jet_l.append({'pt':g.pt(), 'eta':g.eta(), 'phi':g.phi(), 'eup':g.shiftedEnUp(), 'edown':g.shiftedEnDown(), 'es':g.smearedRes(), 'esup':g.smearedResUp(), 'esdown':g.smearedResDown()})
+      if g.genJet():
+        jet_l.append({'pt':g.pt(), 'eta':g.eta(), 'phi':g.phi(), 'eup':g.shiftedEnUp(), 'edown':g.shiftedEnDown(), 'es':g.smearedRes(), 'esup':g.smearedResUp(), 'esdown':g.smearedResDown(), 'gpt':g.genJet().pt(), 'geta':g.genJet().eta(), 'gphi':g.genJet().phi()})
+      else :
+        jet_l.append({'pt':g.pt(), 'eta':g.eta(), 'phi':g.phi(), 'eup':g.shiftedEnUp(), 'edown':g.shiftedEnDown(), 'es':g.smearedRes(), 'esup':g.smearedResUp(), 'esdown':g.smearedResDown(), 'gpt':-10.0, 'geta':-10.0, 'gphi':-10.0})
     if len(jet_l)<3:
       continue
     for x in xrange(len(sys_e)):      
@@ -112,12 +116,14 @@ for rf in root_l:
         res_l.append(jet_l[ji].get(sys_e[x]))
         res_l.append(jet_l[ji].get('eta'))
         res_l.append(jet_l[ji].get('phi'))
-     
+        res_l.append(jet_l[ji].get(sys_e[x])/jet_l[ji].get('gpt'))
+        res_l.append(jet_l[ji].get('eta')-jet_l[ji].get('geta'))
+        res_l.append(jet_l[ji].get('phi')-jet_l[ji].get('gphi'))
       event.getByLabel(geninfoLabel, gen_info)
       gen_w = gen_info.product().weight()
       #event.getByLabel(genJetsLabel, genJets)
       event.getByLabel(puvtxLabel, puvtx)
-      res_l.extend([len(jet_l), mets_, GVTX.product().size(), puvtx.product().at(0).getTrueNumInteractions(),  gen_w, 0.0])      
+      res_l.extend([len(jet_l), mets_, GVTX.product().size(), puvtx.product().at(0).getTrueNumInteractions(),  gen_w, 0.0, 0.0, 0.0])      
       for y in xrange(len(br_c)):
         br_l[x][y][0] = res_l[y]
       tr_l[x].Fill()
