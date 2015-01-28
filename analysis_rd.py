@@ -51,13 +51,12 @@ in_put_num_event = 0
 
 ### ntuple booking
 tr = ROOT.TTree("beta", "beta")
-br_c = ["beta", "del_eta", "del_phi", "del_r", "raw_mass",  "jet1_pt", "jet1_eta", "jet1_phi", "jet2_pt", "jet2_eta", "jet2_phi", "jet3_pt", "jet3_eta", "jet3_phi", "njet", "met", "nvtx", "hlt_pass", "hlt_pre"]
+br_c = ["beta", "del_eta", "del_phi", "del_r", "raw_mass",  "jet1_pt", "jet1_eta", "jet1_phi", "jet2_pt", "jet2_eta", "jet2_phi", "jet3_pt", "jet3_eta", "jet3_phi", "njet", "met", "nvtx", "hlt80_pass", "hlt140_pass", "hlt320_pass", "hlt80_pre", "hlt140_pre", "hlt320_pre"]
 br_l = []
 for y in xrange(len(br_c)):
   br_l.append(array("d", [0.0]))
   tr.Branch(br_c[y], br_l[y], br_c[y]+"/D")
 ### ntuple booking end
-hlt_n = ["HLT_PFJet40_","HLT_PFJet80_","HLT_PFJet140_","HLT_PFJet200_","HLT_PFJet260_","HLT_PFJet320_"]
 root_l = []
 root_fath = open(in_f)
 for x in root_fath:
@@ -73,6 +72,13 @@ for rf in root_l:
   triggerPLabel, hlt_path = "patTrigger", Handle("vector<pat::TriggerPath>")
   metLabel, mets = "catMETs", Handle("vector<cat::MET>")
 
+  hlt80passL, hlt80pass = ("recoEventInfo","HLTPFJet80"), Handle("bool")
+  hlt140passL, hlt140pass = ("recoEventInfo","HLTPFJet140"), Handle("bool")
+  hlt320passL, hlt320pass = ("recoEventInfo","HLTPFJet320"), Handle("bool")
+  hlt80preL, hlt80pre = ("recoEventInfo","psHLTPFJet80"), Handle("int")
+  hlt140preL, hlt140pre = ("recoEventInfo","psHLTPFJet140"), Handle("int")
+  hlt320preL, hlt320pre = ("recoEventInfo","psHLTPFJet320"), Handle("int")
+
   for iev,event in enumerate(events):
     ### event cut
     event.getByLabel(jetsLabel,jets)
@@ -85,18 +91,6 @@ for rf in root_l:
     if not goodvtx:
       continue
 
-    event.getByLabel(triggerPLabel, hlt_path)
-    hlt_p = hlt_path.product()
-    hlt_pass = []
-    hlt_pre = []
-    for i, hlt in enumerate(hlt_p):
-      for j, n in enumerate(hlt_n):
-        if hlt.name().startswith(n):
-          hlt_pass.append(hlt.wasAccept())
-          hlt_pre.append(hlt.prescale())
-
-    event.getByLabel(metLabel, mets)
-    mets_ = mets.product().at(0).et()
     jet_l = []
     for g in jets.product():
       if g.LooseId() == 0 or g.pt() < 30:
@@ -104,17 +98,6 @@ for rf in root_l:
       jet_l.append(g)
     if len(jet_l)<3:
       continue
-    br_hlt_pass = 0.0
-    br_hlt_pre = 0.0
-    for xh in [5,4,3,2,1,0]:
-      if hlt_pass[xh] == 1:
-        br_hlt_pass =xh
-        br_hlt_pre = hlt_pre[xh]
-        break
-    hlt_pass.sort()
-    if hlt_pass[-1] == 0:
-      br_hlt_pass = -10.0
-      br_hlt_pre = -10.0
 
     res_l = []
     beta_result = cal_beta(jet_l[1].eta(), jet_l[1].phi(), jet_l[2].eta(), jet_l[2].phi())
@@ -124,7 +107,29 @@ for rf in root_l:
       res_l.append(jet_l[ji].pt())
       res_l.append(jet_l[ji].eta())
       res_l.append(jet_l[ji].phi())
-    res_l.extend([len(jet_l), mets_, GVTX.product().size(), br_hlt_pass , br_hlt_pre])      
+    event.getByLabel(metLabel, mets)
+    mets_ = mets.product().at(0).et()
+    res_l.extend([len(jet_l), mets_, GVTX.product().size()])
+    event.getByLabel(hlt80passL, hlt80pass)
+    event.getByLabel(hlt140passL, hlt140pass)
+    event.getByLabel(hlt320passL, hlt320pass)
+    if hlt80pass.product():
+      res_l.append(1.0)
+    else:
+      res_l.append(0.0)
+    if hlt140pass.product():
+      res_l.append(1.0)
+    else:
+      res_l.append(0.0)
+    if hlt320pass.product():
+      res_l.append(1.0)
+    else:
+      res_l.append(0.0)
+      print "hlt320 f"
+    event.getByLabel(hlt80preL, hlt80pre)
+    event.getByLabel(hlt140preL, hlt140pre)
+    event.getByLabel(hlt320preL, hlt320pre)
+    res_l.extend([hlt80pre.product()[0], hlt140pre.product()[0], hlt320pre.product()[0]])
     for y in xrange(len(br_c)):
       br_l[y][0] = res_l[y]
     tr.Fill()
