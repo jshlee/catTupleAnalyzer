@@ -28,19 +28,21 @@ for x in xrange(4):
   
 
 cross = [1.036E7, 276000.0, 8426.0, 204.0]
+hlt_lumi = [2131484.000, 1413760.506, 1172.012]
 
-root_list = ["QCD_HT-100To250_TuneZ2star_8TeV-madgraph-pythia_hist.root", "QCD_HT-250To500_TuneZ2star_8TeV-madgraph-pythia6_hist.root", "QCD_HT-500To1000_TuneZ2star_8TeV-madgraph-pythia6_hist.root", "QCD_HT-1000ToInf_TuneZ2star_8TeV-madgraph-pythia6_hist.root"]
+root_list = ["QCD_HT-100To250_TuneZ2star_8TeV-madgraph-pythia6_hist.root", "QCD_HT-250To500_TuneZ2star_8TeV-madgraph-pythia6_hist.root", "QCD_HT-500To1000_TuneZ2star_8TeV-madgraph-pythia6_hist.root", "QCD_HT-1000ToInf_TuneZ2star_8TeV-madgraph-pythia6_hist.root"]
 
 tf = []
 for x in root_list:
   tf.append(ROOT.TFile(x))
 
-key = [x.GetName() for x in tf[0].GetListOfKeys()]
+key = [x.GetName() for x in tf[0].GetListOfKeys() if not x.GetName().endswith("rooulfold")]
 
-weight = [x*eve_num[1][i]/eve_num[0][i] for i,x in enumerate(cross)]
-weight2 = [x*eve_num[2][i]/eve_num[0][i] for i,x in enumerate(cross)]
-"""
+weight = [x/eve_num[0][i] for i,x in enumerate(cross)]
+weight2 = [x/eve_num[0][i] for i,x in enumerate(cross)]
 sum_hist = []
+
+"""
 for x in key:
   tmp_hist = []
   for y in tf:
@@ -49,11 +51,35 @@ for x in key:
   hist.Reset()
   for i,h in enumerate(tmp_hist):
     tmp_name = x.split("_")
-    if len(tmp_name)>3 and  tmp_name[1] == "pt" and tmp_name[3] == "eta":
-      hist.Add(h, weight2[i])
-    else:
-      hist.Add(h, weight[i])
+    if len(tmp_name)>3:
+      en =  h.GetEntries()
+      if tmp_name[2] == "low" or tmp_name[2] == "high":
+        if tmp_name[0] == "low":
+          print "sum"
+          hist.Add(h, weight2[i]*hlt_lumi[0]*1E-12*en)
+        if tmp_name[0] == "medium":
+          hist.Add(h, weight2[i]*hlt_lumi[1]*1E-12*en)
+        if tmp_name[0] == "high":
+          hist.Add(h, weight2[i]*hlt_lumi[2]*1E-12*en)
+      else:
+        hist.Add(h, weight[i])
   sum_hist.append(copy.deepcopy(hist))
+"""
+
+
+for x in key:
+  tmp_hist = []
+  for y in tf:
+    tmp_hist.append(y.Get(x))
+  hist = tmp_hist[0].Clone()
+  hist.Reset()
+  for i,h in enumerate(tmp_hist):
+    tmp_name = x.split("_")
+    en = h.GetEntries()
+    hist.Add(h, en*weight2[i])
+  sum_hist.append(copy.deepcopy(hist))
+
+
 
 out_root = ROOT.TFile("QCD_HT_TuneZ2star_8TeV-madgraph-pythia6_hist.root","RECREATE")
 for h in sum_hist:
@@ -61,4 +87,3 @@ for h in sum_hist:
 
 out_root.Write()
 out_root.Close()
-"""

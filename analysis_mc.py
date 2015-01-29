@@ -52,7 +52,7 @@ in_put_num_event = 0
 ### ntuple booking
 sys_e = ["pt", "eup", "edown", "es", "esup", "esdown"]
 tr_l = []
-br_c = ["beta", "del_eta", "del_phi", "del_r", "raw_mass",  "jet1_pt", "jet1_eta", "jet1_phi", "jet1_d_pt", "jet1_d_eta", "jet1_d_phi", "gen_jet1_pt", "gen_jet1_eta", "gen_jet1_phi", "jet2_pt", "jet2_eta", "jet2_phi", "jet2_d_pt", "jet2_d_eta", "jet2_d_phi", "gen_jet2_pt", "gen_jet2_eta", "gen_jet2_phi", "jet3_pt", "jet3_eta", "jet3_phi", "jet3_d_pt", "jet3_d_eta", "jet3_d_phi", "gen_jet3_pt", "gen_jet3_eta", "gen_jet3_phi", "njet", "met", "nvtx", "npuvtx", "mc_w", "pu_w", "pu_w_up", "pu_w_down", "pdf_w_q", "pdf_w_x1", "pdf_w_x2", "pdf_w_id1", "pdf_w_id2"]
+br_c = ["beta", "del_eta", "del_phi", "del_r", "raw_mass",  "jet1_pt", "jet1_eta", "jet1_phi", "jet1_d_pt", "jet1_d_eta", "jet1_d_phi", "gen_jet1_pt", "gen_jet1_eta", "gen_jet1_phi", "jet2_pt", "jet2_eta", "jet2_phi", "jet2_d_pt", "jet2_d_eta", "jet2_d_phi", "gen_jet2_pt", "gen_jet2_eta", "gen_jet2_phi", "jet3_pt", "jet3_eta", "jet3_phi", "jet3_d_pt", "jet3_d_eta", "jet3_d_phi", "gen_jet3_pt", "gen_jet3_eta", "gen_jet3_phi", "njet", "met", "nvtx", "pu_w", "pu_w_up", "pu_w_down", "pdf_w_q", "pdf_w_x1", "pdf_w_x2", "pdf_w_id1", "pdf_w_id2"]
 br_l = []
 for x in xrange(len(sys_e)):
   tr_l.append(copy.deepcopy(ROOT.TTree(sys_e[x]+"_beta", "color cohernece systematic errors : "+sys_e[x])))
@@ -79,7 +79,6 @@ for rf in root_l:
   metLabel, mets = "catMETs", Handle("vector<cat::MET>")
 
   genJetsLabel, genJets = "catGenJets", Handle("std::vector<cat::GenJet>")
-  geninfoLabel, gen_info = "generator", Handle("GenEventInfoProduct")
   puvtxLabel, puvtx = "addPileupInfo", Handle("vector<PileupSummaryInfo>")
   puwLabel, puw = ("pileupWeight", ""), Handle("double")
   puwupLabel, puwup = ("pileupWeight", "up"), Handle("double")
@@ -146,11 +145,10 @@ for rf in root_l:
           res_l.append(-10.0)
           res_l.append(-10.0)
           res_l.append(-10.0)         
-      event.getByLabel(geninfoLabel, gen_info)
-      gen_w = gen_info.product().weight()
+      #event.getByLabel(geninfoLabel, gen_info)
       #event.getByLabel(genJetsLabel, genJets)
-      event.getByLabel(puvtxLabel, puvtx)
-      res_l.extend([len(jet_l), mets_, GVTX.product().size(), puvtx.product().at(0).getTrueNumInteractions(),  gen_w, puw.product()[0], puwup.product()[0], puwdown.product()[0]])   
+      #event.getByLabel(puvtxLabel, puvtx)
+      res_l.extend([len(jet_l), mets_, GVTX.product().size(), puw.product()[0], puwup.product()[0], puwdown.product()[0]])   
       res_l.extend([pdfwq.product()[0], pdfwx1.product()[0], pdfwx2.product()[0], pdfwid1.product()[0], pdfwid2.product()[0]])
       for y in xrange(len(br_c)):
         br_l[x][y][0] = res_l[y]

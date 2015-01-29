@@ -10,7 +10,7 @@ for x in root_f:
   tmp = x.split("_")
   tmp2 = ""
   for t in tmp:
-    if t == "hist":
+    if t == "ntuple":
       break
     tmp2 += t+"_" 
   try:

@@ -51,7 +51,7 @@ in_put_num_event = 0
 
 ### ntuple booking
 tr = ROOT.TTree("beta", "beta")
-br_c = ["beta", "del_eta", "del_phi", "del_r", "raw_mass",  "jet1_pt", "jet1_eta", "jet1_phi", "jet2_pt", "jet2_eta", "jet2_phi", "jet3_pt", "jet3_eta", "jet3_phi", "njet", "met", "nvtx", "hlt80_pass", "hlt140_pass", "hlt320_pass", "hlt80_pre", "hlt140_pre", "hlt320_pre"]
+br_c = ["beta", "del_eta", "del_phi", "del_r", "raw_mass",  "jet1_pt", "jet1_eta", "jet1_phi", "jet2_pt", "jet2_eta", "jet2_phi", "jet3_pt", "jet3_eta", "jet3_phi", "njet", "met", "nvtx", "hlt80_pass", "hlt80_pre", "hlt140_pass", "hlt140_pre", "hlt320_pass", "hlt320_pre"]
 br_l = []
 for y in xrange(len(br_c)):
   br_l.append(array("d", [0.0]))
@@ -81,15 +81,10 @@ for rf in root_l:
 
   for iev,event in enumerate(events):
     ### event cut
-    event.getByLabel(jetsLabel,jets)
-    try :
-      jets.product() 
-    except :
-      continue
+    if not event.getByLabel(jetsLabel,jets): continue
     event.getByLabel(goodVTXLabel, GVTX)
     goodvtx = GVTX.isValid()
-    if not goodvtx:
-      continue
+    if not goodvtx: continue
 
     jet_l = []
     for g in jets.product():
@@ -110,26 +105,28 @@ for rf in root_l:
     event.getByLabel(metLabel, mets)
     mets_ = mets.product().at(0).et()
     res_l.extend([len(jet_l), mets_, GVTX.product().size()])
-    event.getByLabel(hlt80passL, hlt80pass)
-    event.getByLabel(hlt140passL, hlt140pass)
-    event.getByLabel(hlt320passL, hlt320pass)
-    if hlt80pass.product():
-      res_l.append(1.0)
+
+    if event.getByLabel(hlt80passL, hlt80pass) :
+      res_l.append(int(hlt80pass.product()[0]))
+      event.getByLabel(hlt80preL, hlt80pre)
+      res_l.append(hlt80pre.product()[0])
     else:
-      res_l.append(0.0)
-    if hlt140pass.product():
-      res_l.append(1.0)
+      res_l.extend([0.0, 0.0])
+
+    if event.getByLabel(hlt140passL, hlt140pass) :
+      res_l.append(int(hlt140pass.product()[0]))
+      event.getByLabel(hlt140preL, hlt140pre)
+      res_l.append(hlt140pre.product()[0])
     else:
-      res_l.append(0.0)
-    if hlt320pass.product():
-      res_l.append(1.0)
+      res_l.extend([0.0, 0.0])
+
+    if event.getByLabel(hlt320passL, hlt320pass) :
+      res_l.append(int(hlt320pass.product()[0]))
+      event.getByLabel(hlt320preL, hlt320pre)
+      res_l.append(hlt320pre.product()[0])
     else:
-      res_l.append(0.0)
-      print "hlt320 f"
-    event.getByLabel(hlt80preL, hlt80pre)
-    event.getByLabel(hlt140preL, hlt140pre)
-    event.getByLabel(hlt320preL, hlt320pre)
-    res_l.extend([hlt80pre.product()[0], hlt140pre.product()[0], hlt320pre.product()[0]])
+      res_l.extend([0.0, 0.0])
+
     for y in xrange(len(br_c)):
       br_l[y][0] = res_l[y]
     tr.Fill()
