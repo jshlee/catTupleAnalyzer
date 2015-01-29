@@ -39,8 +39,8 @@ l_eta = "(abs(jet2_eta)<0.8)*"
 h_eta = "(abs(jet2_eta)>0.8)*(abs(jet2_eta)<2.5)*"
 ##hlt : 40:0, 80:1, 140:2, 200:3, 260:4, 320:5
 h_pt = "(jet1_pt>507)*(jet1_pt<2500)*(hlt320_pass==1)*(hlt320_pre)"
-m_pt = "(jet1_pt>220)*(jet1_pt<507)*(hlt140_pass==1)*(hlt140_pre)"
-l_pt = "(jet1_pt>74)*(jet1_pt<220)*(hlt80_pass==1)*(hlt80_pre)"
+m_pt = "(jet1_pt>220)*(jet1_pt<507)*(hlt140_pass==1)*(hlt320_pass==0)*(hlt140_pre)"
+l_pt = "(jet1_pt>74)*(jet1_pt<220)*(hlt80_pass==1)*(hlt140_pass==0)*(hlt320_pass==0)*(hlt80_pre)"
 
 ## event weight
 
