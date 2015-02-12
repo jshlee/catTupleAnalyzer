@@ -63,9 +63,9 @@ for sys in sys_e:
     l_pt = "(%s_jet1_pt>74)*(%s_jet1_pt<220)*"%(sys,sys)
     e_w = "(%s_pu_w)"%sys
   else:
-    h_pt = "(%s_jet1_pt>507)*(%s_jet1_pt<2500)*(%s_hlt80_pass == 1)*(%s_hlt80_pre)"%(sys,sys,sys,sys)
+    h_pt = "(%s_jet1_pt>507)*(%s_jet1_pt<2500)*(%s_hlt320_pass == 1)*(%s_hlt320_pre)"%(sys,sys,sys,sys)
     m_pt = "(%s_jet1_pt>220)*(%s_jet1_pt<507)*(%s_hlt140_pass == 1)*(%s_hlt140_pre)"%(sys,sys,sys,sys)
-    l_pt = "(%s_jet1_pt>74)*(%s_jet1_pt<220)*(%s_hlt320_pass == 1)*(%s_hlt320_pre)"%(sys,sys,sys,sys)
+    l_pt = "(%s_jet1_pt>74)*(%s_jet1_pt<220)*(%s_hlt80_pass == 1)*(%s_hlt80_pre)"%(sys,sys,sys,sys)
     e_w = "*(1.0)"
   ## event weight
 
@@ -213,10 +213,12 @@ if mc:
   for eta_i, eta_loop in enumerate(eta_bin):
     for pt_i, pt_loop in enumerate(pt_bin):
       name = eta_loop+"_"+pt_loop+"_unfold"
+      name2 = eta_loop+"_"+pt_loop+"_gen_beta"
       tr = tr_beta
       br_gen = "pt_gen_beta"
       br_reco = "pt_beta"
       cut = d_cut + eta_bin_cut[eta_i] + pt_bin_cut[pt_i] + e_w
+      hist_l.append(copy.deepcopy(hist_maker(name2,name2, [18,0,pi], "gen_beta", "count", tr,br_gen,cut)))
       hist_l.append(copy.deepcopy(hist2_maker(name,tr,br_reco,br_gen,cut)))
 
 

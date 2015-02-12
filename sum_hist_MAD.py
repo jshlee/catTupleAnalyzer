@@ -28,9 +28,8 @@ for x in xrange(4):
   
 
 cross = [1.036E7, 276000.0, 8426.0, 204.0]
-hlt_lumi = [2131484.000, 1413760.506, 1172.012]
 
-root_list = ["QCD_HT-100To250_TuneZ2star_8TeV-madgraph-pythia6_hist.root", "QCD_HT-250To500_TuneZ2star_8TeV-madgraph-pythia6_hist.root", "QCD_HT-500To1000_TuneZ2star_8TeV-madgraph-pythia6_hist.root", "QCD_HT-1000ToInf_TuneZ2star_8TeV-madgraph-pythia6_hist.root"]
+root_list = ["QCD_HT-100To250_TuneZ2star_8TeV-madgraph-pythia_hist.root", "QCD_HT-250To500_TuneZ2star_8TeV-madgraph-pythia6_hist.root", "QCD_HT-500To1000_TuneZ2star_8TeV-madgraph-pythia6_hist.root", "QCD_HT-1000ToInf_TuneZ2star_8TeV-madgraph-pythia6_hist.root"]
 
 tf = []
 for x in root_list:
@@ -76,7 +75,8 @@ for x in key:
   for i,h in enumerate(tmp_hist):
     tmp_name = x.split("_")
     en = h.GetEntries()
-    hist.Add(h, en*weight2[i])
+    #hist.Add(h, 1172.01*3E-5/2.4*en*weight2[i])
+    hist.Add(h, 1172.01*1E-5*en*weight2[i])
   sum_hist.append(copy.deepcopy(hist))
 
 

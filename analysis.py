@@ -139,7 +139,7 @@ for rf in root_l:
       if g.LooseId() == 0 or g.pileupJetId() < 0.9 or g.pt() < 30:
         continue
       if mc:
-        jet_l.append({'pt':g.pt(), 'eup':g.shiftedEnUp(), 'edown':g.shiftedEnDown(), 'es':g.smearedRes(), 'esup':g.smearedResUp(), 'esdown':g.smearedResDown(), 'jet':g})
+        jet_l.append({'pt':g.pt(), 'eup':g.shiftedEnUp()*g.pt(), 'edown':g.shiftedEnDown()*g.pt(), 'es':g.smearedRes()*g.pt(), 'esup':g.smearedResUp()*g.pt(), 'esdown':g.smearedResDown()*g.pt(), 'jet':g})
       else:
         jet_l.append({'pt':g.pt(),'jet':g})
     if len(jet_l)<3:
