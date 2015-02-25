@@ -1,5 +1,5 @@
 import ROOT, sys, copy, os
-
+"""
 target = sys.argv[1]
 
 list = [x for x in os.listdir(target) if x.endswith("num_of_events.txt")] 
@@ -25,11 +25,12 @@ for x in xrange(4):
     for i,z in enumerate(tmp):
        eve_num[i][x] += float(z.split()[-1])
       
-  
+"""
 
 cross = [1.036E7, 276000.0, 8426.0, 204.0]
-
+num_of_eve = [52000000, 28229933, 32000000, 13960000]
 root_list = ["QCD_HT-100To250_TuneZ2star_8TeV-madgraph-pythia_hist.root", "QCD_HT-250To500_TuneZ2star_8TeV-madgraph-pythia6_hist.root", "QCD_HT-500To1000_TuneZ2star_8TeV-madgraph-pythia6_hist.root", "QCD_HT-1000ToInf_TuneZ2star_8TeV-madgraph-pythia6_hist.root"]
+luminosity = 1172.01
 
 tf = []
 for x in root_list:
@@ -37,8 +38,9 @@ for x in root_list:
 
 key = [x.GetName() for x in tf[0].GetListOfKeys() if not x.GetName().endswith("rooulfold")]
 
-weight = [x/eve_num[0][i] for i,x in enumerate(cross)]
-weight2 = [x/eve_num[0][i] for i,x in enumerate(cross)]
+#weight = [x/eve_num[0][i] for i,x in enumerate(cross)]
+
+weight2 = [20.*luminosity*x/num_of_eve[i] for i,x in enumerate(cross)]
 sum_hist = []
 
 """
@@ -74,9 +76,9 @@ for x in key:
   hist.Reset()
   for i,h in enumerate(tmp_hist):
     tmp_name = x.split("_")
-    en = h.GetEntries()
-    #hist.Add(h, 1172.01*3E-5/2.4*en*weight2[i])
-    hist.Add(h, 1172.01*1E-5*en*weight2[i])
+    #en = h.GetEntries()
+    hist.Add(h, weight2[i])
+    #hist.Add(h, 1172.01*120/5.6*weight2[i])
   sum_hist.append(copy.deepcopy(hist))
 
 
