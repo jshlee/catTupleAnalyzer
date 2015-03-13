@@ -38,7 +38,7 @@ def hist2_maker(name,tr,br_reco,br_gen,cut):
 ### analysis cuts for data
 
 if mc:
-    sys_e = ["pt", "eup", "edown", "es", "esup", "esdown"]
+    sys_e = ["pt", "eup", "edown", "es", "esup", "esdown", "jar"]
 else:
     sys_e = ["pt"]    
 hist_l = []
@@ -56,16 +56,14 @@ for sys in sys_e:
 
   l_eta = "(abs(%s_jet2_eta)<0.8)*"%sys
   h_eta = "(abs(%s_jet2_eta)>0.8)*(abs(%s_jet2_eta)<2.5)*"%(sys,sys)
-  ##hlt : 40:0, 80:1, 140:2, 200:3, 260:4, 320:5
+
+  h_pt = "(%s_jet1_pt>507)*(%s_jet1_pt<2500)*(%s_hlt320_pass == 1)"%(sys,sys,sys)
+  m_pt = "(%s_jet1_pt>220)*(%s_jet1_pt<507)*(%s_hlt140_pass == 1)"%(sys,sys,sys)
+  l_pt = "(%s_jet1_pt>74)*(%s_jet1_pt<220)*(%s_hlt80_pass == 1)"%(sys,sys,sys)
+ ##hlt : 40:0, 80:1, 140:2, 200:3, 260:4, 320:5
   if mc:
-    h_pt = "(%s_jet1_pt>507)*(%s_jet1_pt<2500)*"%(sys,sys)
-    m_pt = "(%s_jet1_pt>220)*(%s_jet1_pt<507)*"%(sys,sys)
-    l_pt = "(%s_jet1_pt>74)*(%s_jet1_pt<220)*"%(sys,sys)
-    e_w = "(%s_pu_w)"%sys
+    e_w = "*(%s_pu_w)"%(sys)
   else:
-    h_pt = "(%s_jet1_pt>507)*(%s_jet1_pt<2500)*(%s_hlt320_pass == 1)*(%s_hlt320_pre)"%(sys,sys,sys,sys)
-    m_pt = "(%s_jet1_pt>220)*(%s_jet1_pt<507)*(%s_hlt140_pass == 1)*(%s_hlt140_pre)"%(sys,sys,sys,sys)
-    l_pt = "(%s_jet1_pt>74)*(%s_jet1_pt<220)*(%s_hlt80_pass == 1)*(%s_hlt80_pre)"%(sys,sys,sys,sys)
     e_w = "*(1.0)"
   ## event weight
 
