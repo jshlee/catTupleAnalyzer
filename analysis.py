@@ -81,9 +81,9 @@ else:
     sys_e = ["pt"]    
 tr_l = []
 if mc:
-    br_c = ["beta", "del_eta", "del_phi", "del_r", "raw_mass", "gen_beta", "jet1_pt", "jet1_eta", "jet1_phi", "jet2_pt", "jet2_eta", "jet2_phi", "jet3_pt", "jet3_eta", "jet3_phi", "jet1_d_pt", "jet1_d_eta", "jet1_d_phi", "gen_jet1_pt", "gen_jet1_eta", "gen_jet1_phi", "jet2_d_pt", "jet2_d_eta", "jet2_d_phi", "gen_jet2_pt", "gen_jet2_eta", "gen_jet2_phi", "jet3_d_pt", "jet3_d_eta", "jet3_d_phi", "gen_jet3_pt", "gen_jet3_eta", "gen_jet3_phi", "njet", "met", "nvtx", "hlt80_pass", "hlt80_pre", "hlt140_pass", "hlt140_pre", "hlt320_pass" , "hlt320_pre","pu_w", "pu_w_up", "pu_w_down", "pdf_w", "pdf_w_q", "pdf_w_x1", "pdf_w_x2", "pdf_w_id1", "pdf_w_id2"]
+    br_c = ["beta", "del_eta", "del_phi", "del_r", "del_r12", "raw_mass", "gen_beta", "jet1_pt", "jet1_eta", "jet1_phi", "jet2_pt", "jet2_eta", "jet2_phi", "jet3_pt", "jet3_eta", "jet3_phi", "jet1_d_pt", "jet1_d_eta", "jet1_d_phi", "gen_jet1_pt", "gen_jet1_eta", "gen_jet1_phi", "jet2_d_pt", "jet2_d_eta", "jet2_d_phi", "gen_jet2_pt", "gen_jet2_eta", "gen_jet2_phi", "jet3_d_pt", "jet3_d_eta", "jet3_d_phi", "gen_jet3_pt", "gen_jet3_eta", "gen_jet3_phi", "njet", "met", "nvtx", "hlt80_pass", "hlt80_pre", "hlt140_pass", "hlt140_pre", "hlt320_pass" , "hlt320_pre","pu_w", "pu_w_up", "pu_w_down", "pdf_w", "pdf_w_q", "pdf_w_x1", "pdf_w_x2", "pdf_w_id1", "pdf_w_id2"]
 else:
-    br_c = ["beta", "del_eta", "del_phi", "del_r", "raw_mass", "jet1_pt", "jet1_eta", "jet1_phi", "jet2_pt", "jet2_eta", "jet2_phi", "jet3_pt", "jet3_eta", "jet3_phi", "njet", "met", "nvtx", "hlt80_pass", "hlt80_pre", "hlt140_pass", "hlt140_pre", "hlt320_pass", "hlt320_pre"]
+    br_c = ["beta", "del_eta", "del_phi", "del_r", "del_r12", "raw_mass", "jet1_pt", "jet1_eta", "jet1_phi", "jet2_pt", "jet2_eta", "jet2_phi", "jet3_pt", "jet3_eta", "jet3_phi", "njet", "met", "nvtx", "hlt80_pass", "hlt80_pre", "hlt140_pass", "hlt140_pre", "hlt320_pass", "hlt320_pre"]
 br_l = []
 for x in xrange(len(sys_e)):
   tr_l.append(copy.deepcopy(ROOT.TTree(sys_e[x]+"_beta", "color cohernece systematic errors : "+sys_e[x])))
@@ -117,7 +117,8 @@ for rf in root_l:
     puwLabel, puw = ("pileupWeight", ""), Handle("double")
     puwupLabel, puwup = ("pileupWeight", "up"), Handle("double")
     puwdownLabel, puwdown = ("pileupWeight", "dn"), Handle("double")
-    pdfwLabel, pdfw = ("pdfWeight", "","CAT"),  Handle("vector<double>")
+    #pdfwLabel, pdfw = ("pdfWeight", "","CAT"),  Handle("vector<double>")
+    pdfwLabel, pdfw = ("recoEventInfo", "generatorWeight","CAT"),  Handle("double")
     pdfwqLabel, pdfwq = ("pdfWeight", "Q"), Handle("double")
     pdfwx1Label, pdfwx1 = ("pdfWeight", "x1"), Handle("double")
     pdfwx2Label, pdfwx2 = ("pdfWeight", "x2"), Handle("double")
@@ -161,6 +162,10 @@ for rf in root_l:
         jet_l.append({'pt':g.pt(),'jet':g})
     if len(jet_l)<3:
       continue
+    #if jet_l[0].get('jet').bDiscriminator("combinedSecondaryVertexBJetTags")<0.244 and jet_l[1].get('jet').bDiscriminator("combinedSecondaryVertexBJetTags")<0.244:
+    #  continue
+    #if jet_l[2].get('jet').bDiscriminator("combinedSecondaryVertexBJetTags")>0.244:
+    #  continue
     cut_selected += 1
     for x in xrange(len(sys_e)):      
       res_l = []
@@ -172,6 +177,7 @@ for rf in root_l:
         jet_jar_p = [jet1_p, jet2_p, jet3_p]
         beta_result = cal_beta(jet2_p[0], jet2_p[1], jet3_p[0], jet3_p[1])
         res_l.extend(beta_result)
+        res_l.append(abs(abs(cal_del_phi(jet_l[0].get('jet').phi(),jet_l[1].get('jet').phi()))-pi))
         res_l.append((jet_l[0].get('jet').p4() + jet_l[1].get('jet').p4()).M())
         jet_c_l = []
         for ji in xrange(3):
@@ -181,6 +187,7 @@ for rf in root_l:
       else:  
         beta_result = cal_beta(jet_l[1].get('jet').eta(), jet_l[1].get('jet').phi(), jet_l[2].get('jet').eta(), jet_l[2].get('jet').phi())
         res_l.extend(beta_result)
+        res_l.append(abs(abs(cal_del_phi(jet_l[0].get('jet').phi(),jet_l[1].get('jet').phi()))-pi))
         res_l.append((jet_l[0].get('jet').p4()*(jet_l[0].get(sys_e[x])/jet_l[0].get('pt')) + jet_l[1].get('jet').p4()*(jet_l[1].get(sys_e[x])/jet_l[1].get('pt'))).M())
         jet_c_l = []
         gjet_c = 0
@@ -201,7 +208,7 @@ for rf in root_l:
           else:
             jet_c_l.extend([-10.0, -10.0, -10.0, -10.0, -10.0, -10.0])      
         if gjet_c == 3:
-          res_l.append(cal_beta(jet_l[1].get('jet').eta(), jet_l[1].get('jet').phi(), jet_l[2].get('jet').eta(), jet_l[2].get('jet').phi())[0])
+          res_l.append(cal_beta(jet_l[1].get('jet').genJet().eta(), jet_l[1].get('jet').genJet().phi(), jet_l[2].get('jet').genJet().eta(), jet_l[2].get('jet').genJet().phi())[0])
         else:
           res_l.append(-10.0)
       res_l.extend(jet_c_l) 
