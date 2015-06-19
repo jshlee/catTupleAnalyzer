@@ -1,7 +1,10 @@
 # catTupleAnalyzer
 
 1st step
-make_list.py is going to make list of cattuple files and it will be in RD_ROOT_FILE_LISTS or MC_ROOT_FILE_LISTS
+'''
+python make_list.py job_type
+'''
+is going to make list of cattuple files and it will be in RD_ROOT_FILE_LISTS or MC_ROOT_FILE_LISTS
 e.g)make_list.py rd 
 
 2nd step
