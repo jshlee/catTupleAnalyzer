@@ -16,7 +16,8 @@ python RunAna.py dir
 dir is RD_ROOT_FILE_LIST or MC_ROOT_FILE_LIST
 
 RunAna.py is submit batch job for analysis.py
-Result files will be writed 
+Result files will be writed
+
 if you want run single job,
 ```
 analysis.py job_type[rd|mc] in_put_file[Jet_Run2012A-22Jan2013-v1_ntuple_XXX.txt] out_put_file[Jet_Run2012A-22Jan2013-v1_ntuple_001.root]
