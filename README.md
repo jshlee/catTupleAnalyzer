@@ -9,7 +9,7 @@ job_type is rd or mc.
 make_list.py is going to make list of cattuple files and it will be in RD_ROOT_FILE_LISTS or MC_ROOT_FILE_LISTS
 
 
-2nd step
+##2nd step
 ```
 python RunAna.py dir
 ```
@@ -22,7 +22,7 @@ if you want run single job,
 analysis.py job_type[rd|mc] in_put_file[Jet_Run2012A-22Jan2013-v1_ntuple_XXX.txt] out_put_file[Jet_Run2012A-22Jan2013-v1_ntuple_001.root]
 ```
 
-3rd step
+##3rd step
 ```
 python Runhist.py dir
 ```
