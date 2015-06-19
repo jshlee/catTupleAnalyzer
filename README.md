@@ -29,7 +29,7 @@ python Runhist.py dir
 dir is ANA_RD_XXX or ANA_MC_XXX.
 Runhist.py is submit bacth job for ntuple2hist.py
 
-sigle run 
+single run 
 ```
 python ntuple2hist.py job_type in_put_file out_file_name
 ```
