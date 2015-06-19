@@ -10,7 +10,7 @@ if target.split("_")[0] == "MC":
   mc = True
   type = "mc"
 print type
-time_dir = time.strftime("ANA_ROOT_"+type+"_v5_%d%b%Y_%HH%MM",time.localtime())
+time_dir = time.strftime("ANA_ROOT_"+type+"_v6_%d%b%Y_%HH%MM",time.localtime())
 os.mkdir(time_dir)
 itime_dir = os.getcwd()+"/"+time_dir
 
@@ -44,7 +44,7 @@ for x in q_txt:
     tmp_sc = open(itime_dir+"/"+x[:-4]+".cmd","w")
     tmp_sc.write(script_head)
     tmp_sc.write("\ncd "+itime_dir+"\n")
-    tmp_sc.write("python "+ana_path+"/analysis_%s.py "%type+" "+ipath+"/"+x+" "+itime_dir+"/"+x[:-4]+".root")
+    tmp_sc.write("python "+ana_path+"/analysis.py %s"%type+" "+ipath+"/"+x+" "+itime_dir+"/"+x[:-4]+".root")
     tmp_sc.close()
     os.system("qsub -q kcms "+itime_dir+"/"+x[:-4]+".cmd")
 
