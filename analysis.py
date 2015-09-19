@@ -1,21 +1,17 @@
-###
 import ROOT
 ROOT.gSystem.Load("libFWCoreFWLite.so");
 ROOT.gSystem.Load("libDataFormatsFWLite.so");
 ROOT.AutoLibraryLoader.enable()
 from DataFormats.FWLite import Events, Handle
-import os, gc
-import sys
+import os, gc, time, copy, sys
 from math import sqrt
 from array import array
-import time
-import copy
 
 ROOT.gROOT.Reset()
 ROOT.gROOT.SetBatch()
 pi = ROOT.TMath.Pi()
 
-def jar_jet(pt, eta, phi):
+def jar_jet(pt, eta, phi, cor):
   eta_index = -1
   eta_r = [0.8, 2.0, 2.5, 5.0]
   eta_c = [[6.93E-01, 2.07E-03, 6.01E-03], [7.51E-01, 1.32E-02, 6.88E-03], [5.30E-01, 1.29E-01, 4.88E-03], [8.09E-01, 6.26E-02, 1.74E-02]]
@@ -28,8 +24,8 @@ def jar_jet(pt, eta, phi):
     return [eta, phi]
   sig = lambda a, b, c, d : a/d + b/sqrt(d) + c
   dx = ROOT.TRandom()
-  eta_p = dx.Gaus(eta, sig(eta_c[eta_index][0], eta_c[eta_index][1], eta_c[eta_index][2], pt))
-  phi_p = dx.Gaus(phi, sig(phi_c[eta_index][0], phi_c[eta_index][1], phi_c[eta_index][2], pt))
+  eta_p = (dx.Gaus(eta, sig(eta_c[eta_index][0], eta_c[eta_index][1], eta_c[eta_index][2], pt)*cor))
+  phi_p = (dx.Gaus(phi, sig(phi_c[eta_index][0], phi_c[eta_index][1], phi_c[eta_index][2], pt)*cor))
   return [eta_p, phi_p]
 
 def cal_del_eta(eta1, eta2):
@@ -64,7 +60,7 @@ out_f = sys.argv[3]
 
 mc = True
 if not in_type == 'mc':
-    mc = False
+  mc = False
 
 out_root = ROOT.TFile(out_f,"RECREATE")
 out_num_event = open(out_f[:-5]+"_num_of_events.txt","w")
@@ -76,14 +72,14 @@ cut_selected = 0
 
 ### ntuple booking
 if mc:
-    sys_e = ["pt", "eup", "edown", "es", "esup", "esdown", "jar"]
+  sys_e = ["pt", "eup", "edown", "es", "esup", "esdown", "jarup", "jardown"]
 else:
-    sys_e = ["pt"]    
+  sys_e = ["pt","eup","edown"]    
 tr_l = []
+br_c = ["beta", "del_eta", "del_phi", "del_r", "del_r12", "raw_mass", "jet1_pt", "jet1_eta", "jet1_phi", "jet2_pt", "jet2_eta", "jet2_phi", "jet3_pt", "jet3_eta", "jet3_phi", "njet", "met", "nvtx", "hlt80_pass", "hlt80_pre", "hlt140_pass", "hlt140_pre", "hlt320_pass", "hlt320_pre"]
 if mc:
-    br_c = ["beta", "del_eta", "del_phi", "del_r", "del_r12", "raw_mass", "gen_beta", "jet1_pt", "jet1_eta", "jet1_phi", "jet2_pt", "jet2_eta", "jet2_phi", "jet3_pt", "jet3_eta", "jet3_phi", "jet1_d_pt", "jet1_d_eta", "jet1_d_phi", "gen_jet1_pt", "gen_jet1_eta", "gen_jet1_phi", "jet2_d_pt", "jet2_d_eta", "jet2_d_phi", "gen_jet2_pt", "gen_jet2_eta", "gen_jet2_phi", "jet3_d_pt", "jet3_d_eta", "jet3_d_phi", "gen_jet3_pt", "gen_jet3_eta", "gen_jet3_phi", "njet", "met", "nvtx", "hlt80_pass", "hlt80_pre", "hlt140_pass", "hlt140_pre", "hlt320_pass" , "hlt320_pre","pu_w", "pu_w_up", "pu_w_down", "pdf_w", "pdf_w_q", "pdf_w_x1", "pdf_w_x2", "pdf_w_id1", "pdf_w_id2"]
-else:
-    br_c = ["beta", "del_eta", "del_phi", "del_r", "del_r12", "raw_mass", "jet1_pt", "jet1_eta", "jet1_phi", "jet2_pt", "jet2_eta", "jet2_phi", "jet3_pt", "jet3_eta", "jet3_phi", "njet", "met", "nvtx", "hlt80_pass", "hlt80_pre", "hlt140_pass", "hlt140_pre", "hlt320_pass", "hlt320_pre"]
+  br_c.extend(["pu_w", "pu_w_up", "pu_w_down","gen_beta", "gen_del_eta", "gen_del_phi", "gen_jet1_pt", "gen_jet1_eta", "gen_jet2_pt", "gen_jet2_eta", "gen_jet3_pt", "gen_jet3_eta"])
+
 br_l = []
 for x in xrange(len(sys_e)):
   tr_l.append(copy.deepcopy(ROOT.TTree(sys_e[x]+"_beta", "color cohernece systematic errors : "+sys_e[x])))
@@ -106,74 +102,56 @@ for rf in root_l:
 
   jetsLabel, jets = "catJets", Handle("std::vector<cat::Jet>")
   goodVTXLabel, GVTX = "goodOfflinePrimaryVertices", Handle("vector<reco::Vertex>")
-  triggerPLabel, hlt_path = "patTrigger", Handle("vector<pat::TriggerPath>")
   metLabel, mets = "catMETs", Handle("vector<cat::MET>")
   hlt80preL, hlt80pre = ("recoEventInfo","HLTPFJet80", "CAT"), Handle("int")
   hlt140preL, hlt140pre = ("recoEventInfo","HLTPFJet140","CAT"), Handle("int")
   hlt320preL, hlt320pre = ("recoEventInfo","HLTPFJet320", "CAT"), Handle("int")
  
   if mc:
-    puvtxLabel, puvtx = "addPileupInfo", Handle("vector<PileupSummaryInfo>")
     puwLabel, puw = ("pileupWeight", ""), Handle("double")
     puwupLabel, puwup = ("pileupWeight", "up"), Handle("double")
     puwdownLabel, puwdown = ("pileupWeight", "dn"), Handle("double")
-    #pdfwLabel, pdfw = ("pdfWeight", "","CAT"),  Handle("vector<double>")
-    pdfwLabel, pdfw = ("recoEventInfo", "generatorWeight","CAT"),  Handle("double")
-    pdfwqLabel, pdfwq = ("pdfWeight", "Q"), Handle("double")
-    pdfwx1Label, pdfwx1 = ("pdfWeight", "x1"), Handle("double")
-    pdfwx2Label, pdfwx2 = ("pdfWeight", "x2"), Handle("double")
-    pdfwid1Label, pdfwid1 = ("pdfWeight", "id1"), Handle("int")
-    pdfwid2Label, pdfwid2 = ("pdfWeight", "id2"), Handle("int")
+
         
   for iev,event in enumerate(events):
-    ### event cut
     if not event.getByLabel(jetsLabel,jets): continue
     cut_is_jet += 1
-
     event.getByLabel(goodVTXLabel, GVTX)
     goodvtx = GVTX.isValid()
     if not goodvtx: continue
     cut_is_gvtx += 1
-
     event.getByLabel(metLabel, mets)
-    mets_ = mets.product().at(0).et()
+    mets_ = mets.product().at(0).et()#/mets.product().at(0).sumEt()
     event.getByLabel(hlt80preL, hlt80pre)
     event.getByLabel(hlt140preL, hlt140pre)
     event.getByLabel(hlt320preL, hlt320pre)
     if mc:
       event.getByLabel(puwLabel, puw)
-      event.getByLabel(metLabel, mets)
-      event.getByLabel(puwLabel, puw)
       event.getByLabel(puwupLabel, puwup)
       event.getByLabel(puwdownLabel, puwdown)
-      event.getByLabel(pdfwLabel, pdfw)
-      event.getByLabel(pdfwqLabel, pdfwq)
-      event.getByLabel(pdfwx1Label, pdfwx1)
-      event.getByLabel(pdfwx2Label, pdfwx2)
-      event.getByLabel(pdfwid1Label, pdfwid1)
-      event.getByLabel(pdfwid2Label, pdfwid2)
+
     jet_l = []
     for i,g in enumerate(jets.product()):
       if g.LooseId() == 0 or g.pileupJetId() < 0.9:
         continue
       if mc:
-        jet_l.append({'pt':g.pt(), 'eup':g.shiftedEnUp()*g.pt(), 'edown':g.shiftedEnDown()*g.pt(), 'es':g.smearedRes()*g.pt(), 'esup':g.smearedResUp()*g.pt(), 'esdown':g.smearedResDown()*g.pt(), 'jar':g.pt(), 'jet':g})
+        jet_l.append({'jet':g, 'pt':g.pt(), 'eup':g.shiftedEnUp()*g.pt(), 'edown':g.shiftedEnDown()*g.pt(), 'es':g.smearedRes()*g.pt(), 'esup':g.smearedResUp()*g.pt(), 'esdown':g.smearedResDown()*g.pt(), 'jarup':g.pt(), 'jardonw':g.pt()})
       else:
-        jet_l.append({'pt':g.pt(),'jet':g})
+        jet_l.append({'pt':g.pt(),'jet':g,'eup':g.shiftedEnUp()*g.pt(), 'edown':g.shiftedEnDown()*g.pt()})
     if len(jet_l)<3:
       continue
-    #if jet_l[0].get('jet').bDiscriminator("combinedSecondaryVertexBJetTags")<0.244 and jet_l[1].get('jet').bDiscriminator("combinedSecondaryVertexBJetTags")<0.244:
-    #  continue
-    #if jet_l[2].get('jet').bDiscriminator("combinedSecondaryVertexBJetTags")>0.244:
-    #  continue
     cut_selected += 1
     for x in xrange(len(sys_e)):      
       res_l = []
       sorted(jet_l, key = lambda l : l.get(sys_e[x]), reverse=True)
-      if sys_e[x] == "jar":
-        jet1_p = jar_jet(jet_l[0].get('jet').pt(), jet_l[0].get('jet').eta(), jet_l[0].get('jet').phi())       
-        jet2_p = jar_jet(jet_l[1].get('jet').pt(), jet_l[1].get('jet').eta(), jet_l[1].get('jet').phi())       
-        jet3_p = jar_jet(jet_l[2].get('jet').pt(), jet_l[2].get('jet').eta(), jet_l[2].get('jet').phi())       
+      if sys_e[x] == "jarup" or sys_e[x] == "jardown":
+        if sys_e[x] == "jarup":
+          cor = 1.1
+        else:
+          cor = 0.9
+        jet1_p = jar_jet(jet_l[0].get('jet').pt(), jet_l[0].get('jet').eta(), jet_l[0].get('jet').phi(), cor)       
+        jet2_p = jar_jet(jet_l[1].get('jet').pt(), jet_l[1].get('jet').eta(), jet_l[1].get('jet').phi(), cor)       
+        jet3_p = jar_jet(jet_l[2].get('jet').pt(), jet_l[2].get('jet').eta(), jet_l[2].get('jet').phi(), cor)       
         jet_jar_p = [jet1_p, jet2_p, jet3_p]
         beta_result = cal_beta(jet2_p[0], jet2_p[1], jet3_p[0], jet3_p[1])
         res_l.extend(beta_result)
@@ -195,28 +173,7 @@ for rf in root_l:
           jet_c_l.append(jet_l[ji].get(sys_e[x]))
           jet_c_l.append(jet_l[ji].get('jet').eta())
           jet_c_l.append(jet_l[ji].get('jet').phi())
-      if mc:
-        for ji in xrange(3):  
-          if jet_l[ji].get('jet').genJet():
-            gjet_c += 1
-            jet_c_l.append(jet_l[ji].get(sys_e[x])/jet_l[ji].get('jet').genJet().pt())
-            jet_c_l.append(jet_l[ji].get('jet').eta()-jet_l[ji].get('jet').genJet().eta())
-            jet_c_l.append(cal_del_phi(jet_l[ji].get('jet').phi(), jet_l[ji].get('jet').genJet().phi()))
-            jet_c_l.append(jet_l[ji].get('jet').genJet().pt())
-            jet_c_l.append(jet_l[ji].get('jet').genJet().eta())
-            jet_c_l.append(jet_l[ji].get('jet').genJet().phi())
-          else:
-            jet_c_l.extend([-10.0, -10.0, -10.0, -10.0, -10.0, -10.0])      
-        if gjet_c == 3:
-          res_l.append(cal_beta(jet_l[1].get('jet').genJet().eta(), jet_l[1].get('jet').genJet().phi(), jet_l[2].get('jet').genJet().eta(), jet_l[2].get('jet').genJet().phi())[0])
-        else:
-          res_l.append(-10.0)
       res_l.extend(jet_c_l) 
-
-      
-      #event.getByLabel(geninfoLabel, gen_info)
-      #event.getByLabel(genJetsLabel, genJets)
-      #event.getByLabel(puvtxLabel, puvtx)
       res_l.extend([len(jet_l), mets_, GVTX.product().size()])   
       hlt80pass = 0
       hlt140pass = 0
@@ -231,8 +188,19 @@ for rf in root_l:
 
       if mc:
         res_l.extend([puw.product()[0], puwup.product()[0], puwdown.product()[0]])
-        res_l.extend([pdfw.product()[0], pdfwq.product()[0], pdfwx1.product()[0], pdfwx2.product()[0], pdfwid1.product()[0], pdfwid2.product()[0]])
-
+        n_gen_jet = 0
+        tmp_gen_jet = []
+        for ji in xrange(3):
+          if jet_l[ji].get('jet').genJet():
+            n_gen_jet += 1
+            gen_jet = jet_l[ji].get('jet').genJet()
+            tmp_gen_jet.extend([gen_jet.pt(), gen_jet.eta()])
+        if n_gen_jet == 3:
+          gen_beta = cal_beta(jet_l[1].get('jet').genJet().eta(), jet_l[1].get('jet').genJet().phi(), jet_l[2].get('jet').genJet().eta(), jet_l[2].get('jet').genJet().phi())
+          res_l.extend([gen_beta[0], gen_beta[1], gen_beta[2]]) 
+          res_l.extend(tmp_gen_jet)
+        else:
+          res_l.extend([-10.,-10.,-10.,-10.,-10.,-10.,-10.,-10.,-10.]) 
       for y in xrange(len(br_c)):
         br_l[x][y][0] = res_l[y]
       tr_l[x].Fill()
@@ -253,5 +221,23 @@ out_num_event.write("total cut_is_gvtx evnets : %d\n"%cut_is_gvtx)
 out_num_event.write("total cut_selected evnets : %d\n"%cut_selected)
 
 out_num_event.close()
-
+"""
+        for ji in xrange(3):  
+          if jet_l[ji].get('jet').genJet():
+            gjet_c += 1
+            #jet_c_l.append(jet_l[ji].get(sys_e[x])/jet_l[ji].get('jet').genJet().pt())
+            jet_c_l.append(-10.0)
+            jet_c_l.append(jet_l[ji].get('jet').eta()-jet_l[ji].get('jet').genJet().eta())
+            jet_c_l.append(cal_del_phi(jet_l[ji].get('jet').phi(), jet_l[ji].get('jet').genJet().phi()))
+            jet_c_l.append(jet_l[ji].get('jet').genJet().pt())
+            jet_c_l.append(jet_l[ji].get('jet').genJet().eta())
+            jet_c_l.append(jet_l[ji].get('jet').genJet().phi())
+          else:
+            jet_c_l.extend([-10.0, -10.0, -10.0, -10.0, -10.0, -10.0])      
+        if gjet_c == 3:
+          res_l.append(cal_beta(jet_l[1].get('jet').genJet().eta(), jet_l[1].get('jet').genJet().phi(), jet_l[2].get('jet').genJet().eta(), jet_l[2].get('jet').genJet().phi())[0])
+        else:
+          res_l.append(-10.0)
+      res_l.extend(jet_c_l) 
+"""
 
