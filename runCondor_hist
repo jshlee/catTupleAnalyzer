@@ -1,0 +1,100 @@
+#!/usr/bin/env python
+
+import os, sys, time
+
+class condorSubmiter:
+  def __init__(self,job_name) :
+    self.time_s = time.strftime("_%d%b%Y_%HH%MM",time.localtime())
+    self.run_dir = job_name+self.time_s
+    os.mkdir(self.run_dir)
+    os.chdir(self.run_dir)
+    self.jds_s = """
+executable  = %s
+universe    = vanilla
+error = %s_error.txt
+log = %s_log.txt
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_output_files = %s
+queue
+"""
+
+  def getRunDir(self):
+    return self.run_dir
+ 
+  def setJobtype(self, jop_type):
+    self.job_type = job_type
+
+  def setJobname(self, job_name):
+    self.job_name = job_name 
+
+  def setJobnumber(self, job_number):
+    self.job_number = job_number
+
+  def setCMSpath(self, cms_path):
+    self.cms_path = cms_path
+
+  def setCMS(self,cms_set):
+    self.cms_set = cms_set
+  
+    if cms_set:
+      self.sh_s = """#!/bin/bash
+MYPWD=${PWD}
+source /cvmfs/cms.cern.ch/cmsset_default.sh
+cd %s
+eval `scramv1 runtime -sh`
+cd $MYPWD
+host=`hostname`
+MYDIR="%s"
+/bin/mkdir  -p $MYDIR
+cd $MYDIR
+%s
+      """
+  def submit(self, cmd_string):
+    job_dir = self.job_name+"_%03d"%self.job_number
+    if self.cms_set:
+      tmp_sh_s = self.sh_s%(self.cms_path,job_dir+self.time_s, cmd_string)
+    tmp_sh = open(job_dir+".sh", "w")
+    tmp_sh.write(tmp_sh_s)
+    tmp_sh.close()
+    tmp_jds_s = self.jds_s%(job_dir+".sh", job_dir, job_dir, job_dir+self.time_s)
+    tmp_jds = open(job_dir+".jds", "w")
+    tmp_jds.write(tmp_jds_s)
+    tmp_jds.close()
+    os.system("chmod 755 %s.sh"%job_dir)
+    os.system("chmod 755 %s.jds"%job_dir)
+    os.system("condor_submit %s.jds"%job_dir)
+
+if __name__ == "__main__" :
+
+  cmssw_set = "cms_set_on"
+  cmssw_path = "/pnfs/user/hyunyong/cat_MET_crab/cat/src"
+  job_type = "python"
+  exe_l = "ntuple2hist.py"
+  #exe_l = "test.py"
+
+  target_dir = sys.argv[1]
+
+
+  i_path = os.getcwd()
+  cs = condorSubmiter(exe_l[:exe_l.find(".")])
+  if not cmssw_set.startswith("cms_set"):
+    print "cms_set error, input cms_set_on or cms_set_off"
+    sys.exit()
+  elif cmssw_set == "cms_set_on":
+    cs.setCMS(True)
+    cs.setCMSpath(cmssw_path)
+  else:
+    cs.setCMS(Flase)
+  cs.setJobtype(job_type)
+  cs.setJobname(exe_l[:exe_l.find(".")])
+  #target_file_list = [ target_dir+"/"+x for x in os.listdir(target_dir) if os.path.isfile(x)]
+  target_file_list = [ i_path+"/"+target_dir+"/"+x for x in os.listdir(i_path+"/"+target_dir) if x.endswith(".root")]
+  for i, target_file in enumerate(target_file_list): 
+    cs.setJobnumber(i+1)
+    cs.submit("%s %s/%s %s %s %s"%(job_type, i_path, exe_l, "rd", target_file, i_path+"/"+cs.getRunDir()+"/"+target_file.replace(".root", "_hist.root").split("/")[-1]))
+
+
+
+
+  
